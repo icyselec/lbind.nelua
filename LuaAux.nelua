@@ -1,0 +1,103 @@
+--[[
+Copyright (c) 2024 icyselec
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+]]
+
+## LBIND_LUA_VERSION_DEFAULT = LBIND_LUA_VERSION_DEFAULT or {5, 4, 7}
+## LBIND_LUA_VERSION_X = LBIND_LUA_VERSION_X or LBIND_LUA_VERSION_DEFAULT[1]
+## LBIND_LUA_VERSION_Y = LBIND_LUA_VERSION_Y or LBIND_LUA_VERSION_DEFAULT[2]
+## LBIND_LUA_VERSION_Z = LBIND_LUA_VERSION_Z or LBIND_LUA_VERSION_DEFAULT[3]
+
+## cinclude (LBIND_HEADER_PATH .. "lua.h")
+## cinclude (LBIND_HEADER_PATH .. "lualib.h")
+## cinclude (LBIND_HEADER_PATH .. "lauxlib.h")
+
+local Lua = require 'LuaLib'
+local Aux = @record{}
+local State = require('LuaDef').State
+local Buffer = require('LuaDef').Buffer
+local Integer = require('LuaDef').Integer
+local Number = require('LuaDef').Number
+local Reg = require('LuaDef').Reg
+
+-- Auxiliary Library
+function Aux.addchar(B: *Buffer, c: cchar): void <cimport 'luaL_addchar', nodecl> end
+function Aux.addlstring(B: *Buffer, s: cstring <const>, l: usize): void <cimport 'luaL_addlstring', nodecl> end
+function Aux.addsize(B: *Buffer, n: usize): void <cimport 'luaL_addsize', nodecl> end
+function Aux.addstring(B: *Buffer, s: cstring <const>): void <cimport 'luaL_addstring', nodecl> end
+function Aux.addvalue(B: *Buffer): void <cimport 'luaL_addValue', nodecl> end
+
+function Aux.argcheck(L: *State, cond: cint, narg: cint, extramsg: cstring <const>): void <cimport 'luaL_argcheck', nodecl> end
+function Aux.argerror(L: *State, narg: cint, extramsg: cstring <const>): cint <cimport 'luaL_argerror', nodecl> end
+function Aux.buffinit(B: *Buffer): void <cimport 'luaL_buffinit', nodecl> end
+function Aux.callmeta(L: *State, o: cint, e: cstring <const>): cint <cimport 'luaL_callmeta', nodecl> end
+function Aux.checkany(L: *State, narg: cint): void <cimport 'luaL_checkany', nodecl> end
+function Aux.checkint(L: *State, narg: cint): cint <cimport 'luaL_checkint', nodecl> end
+function Aux.checkinteger(L: *State, narg: cint): Integer <cimport 'luaL_checkinteger', nodecl> end
+function Aux.checklong(L: *State, narg: cint): clong <cimport 'luaL_checklong', nodecl> end
+function Aux.checklstring(L: *State, narg: cint, l: *usize): cstring <cimport 'luaL_checklstring', nodecl> end
+function Aux.checknumber(L: *State, narg: cint): Number <cimport 'luaL_checknumber', nodecl> end
+function Aux.checkoption(L: *State, narg: cint, def: cstring <const>, lst: [0]cstring <const>): cint <cimport 'luaL_checkoption', nodecl> end
+function Aux.checkstack(L: *State, sz: cint, msg: cstring <const>): void <cimport 'luaL_checkstack', nodecl> end
+function Aux.checkstring(L: *State, narg: cint): cstring <cimport 'luaL_checkstring', nodecl> end
+function Aux.checktype(L: *State, narg: cint, t: cint): void <cimport 'luaL_checktype', nodecl> end
+function Aux.checkudata(L: *State, narg: cint, tname: cstring <const>): pointer <cimport 'luaL_checkudata', nodecl> end
+
+function Aux.dofile(L: *State, filename: cstring <const>): cint <cimport 'luaL_dofile', nodecl> end
+function Aux.dostring(L: *State, str: cstring <const>): cint <cimport 'luaL_dostring', nodecl> end
+function Aux.error(L: *State, fmt: cstring <const>, ...: varargs): cint <cimport 'luaL_error', nodecl> end
+
+function Aux.getmetafield(L: *State, o: cint, e: cstring <const>): cint <cimport 'luaL_getmetafield', nodecl> end
+function Aux.getmetatable(L: *State, tname: cstring <const>): void <cimport 'luaL_getmetatable', nodecl> end
+function Aux.gsub(L: *State, s: cstring <const>, p: cstring <const>, r: cstring <const>): cstring <cimport 'luaL_gsub', nodecl> end
+function Aux.loadbuffer(L: *State, buff: cstring <const>, sz: usize, name: cstring <const>): cint <cimport 'luaL_loadbuffer', nodecl> end
+function Aux.loadfile(L: *State, filename: cstring <const>): cint <cimport 'luaL_loadfile', nodecl> end
+function Aux.loadstring(L: *State, s: cstring <const>): cint <cimport 'luaL_loadstring', nodecl> end
+
+local RegArr = #[concept(function (attr) return attr.type.is_array end)]#
+--function Aux.newLibrary(L: *State, l: arr): void <cimport 'luaL_newlib', nodecl> end
+
+function Aux.newlib(L: *State, l: RegArr): void
+	Lua.createtable(L, 0, #l - 1)
+	Aux.setfuncs(L, &l[0])
+end
+
+
+function Aux.newmetatable(tname: cstring <const>): cint <cimport 'luaL_newmetatable', nodecl> end
+function Aux.newstate(): *State <cimport 'luaL_newstate', nodecl> end
+
+function Aux.openlibs(L: *State): void <cimport 'luaL_openlibs', nodecl> end
+function Aux.optint(L: *State, narg: cint, d: cint): cint <cimport 'luaL_optint', nodecl> end
+function Aux.optinteger(L: *State, narg: cint, d: Integer): Integer <cimport 'luaL_optinteger', nodecl> end
+function Aux.optlong(L: *State, narg: cint, d: clong): clong <cimport 'luaL_optlong', nodecl> end
+function Aux.optlstring(L: *State, narg: cint, d: cstring <const>, l: *usize): cstring <cimport 'luaL_optlstring', nodecl> end
+function Aux.optnumber(L: *State, narg: cint, d: Number): Number <cimport 'luaL_optnumber', nodecl> end
+function Aux.optstring(L: *State, narg: cint, d: cstring <const>): cstring <cimport 'luaL_optstring', nodecl> end
+function Aux.prepbuffer(B: *Buffer): cstring <cimport 'luaL_prepbuffer', nodecl> end
+function Aux.pushresult(B: *Buffer): void <cimport 'luaL_pushresult', nodecl> end
+function Aux.ref(L: *State, t: cint): cint <cimport 'luaL_ref', nodecl> end
+---@deprecated
+## if LBIND_LUA_VERSION_X >= 5 and LBIND_LUA_VERSION_Y < 2 then
+	function Aux.register(L: *State, libname: cstring, l: auto): void <cimport 'luaL_register', nodecl> end
+## else
+	function Aux.register(L: *State, libname: cstring, l: auto): void
+		Lua.pushstring(L, [[attempt to call a removed C API. ('luaL_register')
+\z		Please re-compile this module with '## LBIND_LUA_VERSION_DEFAULT = {5, 1, 0}'
+]])
+		Lua.error(L)
+	end
+## end
+
+
+function Aux.setfuncs(L: *State, l: *Reg, nup: cint): void <cimport 'luaL_setfuncs', nodecl> end
+function Aux.typename(L: *State, i: cint): cstring <cimport 'luaL_typename', nodecl> end
+function Aux.typerror(L: *State, narg: cint, tname: cstring <const>): cint <cimport 'luaL_typerror', nodecl> end
+function Aux.unref(L: *State, t: cint, ref: cint): void <cimport 'luaL_unref', nodecl> end
+function Aux.where(L: *State, lvl: cint): void <cimport 'luaL_where', nodecl> end
+
+return Aux

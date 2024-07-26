@@ -1,0 +1,66 @@
+--[[
+Copyright (c) 2024 icyselec
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+3. This notice may not be removed or altered from any source distribution.
+]]
+
+## LBIND_LUA_VERSION_DEFAULT = LBIND_LUA_VERSION_DEFAULT or {5, 4, 7}
+## LBIND_LUA_VERSION_X = LBIND_LUA_VERSION_X or LBIND_LUA_VERSION_DEFAULT[1]
+## LBIND_LUA_VERSION_Y = LBIND_LUA_VERSION_Y or LBIND_LUA_VERSION_DEFAULT[2]
+## LBIND_LUA_VERSION_Z = LBIND_LUA_VERSION_Z or LBIND_LUA_VERSION_DEFAULT[3]
+
+## cinclude (LBIND_HEADER_PATH .. "lua.h")
+## cinclude (LBIND_HEADER_PATH .. "lualib.h")
+## cinclude (LBIND_HEADER_PATH .. "lauxlib.h")
+
+local traits = require 'traits'
+
+local LuaDef = @record{}
+
+local LUA_IDSIZE <comptime> = 60
+
+local LuaDef.State <cimport 'lua_State'> = @record{}
+local LuaDef.Alloc: type = @function(ud: pointer, ptr: pointer, osize: isize, nsize: isize): pointer
+local LuaDef.Buffer <cimport 'lua_Buffer'> = @record{}
+--local LuaDef.CFunction <cimport 'lua_CFunction'> = @function(L: *LuaDef.State): cint
+local LuaDef.CFunction: type = @function(L: *LuaDef.State): cint
+local LuaDef.Debug: type = @record{
+	event: cint,
+	name: cstring,
+	namewhat: cstring,
+	what: cstring,
+	source: cstring,
+	currentline: cint,
+	nups: cint,
+	linedefined: cint,
+	lastlinedefined: cint,
+	short_src: [LUA_IDSIZE]cchar,
+	-- private part
+	_unknown: cint,
+}
+local LuaDef.Hook: type = @function(L: *LuaDef.State, ar: *LuaDef.Debug): void
+local LuaDef.Integer: type = @cptrdiff
+local LuaDef.Number: type = @number
+local LuaDef.Reader: type = @function(L: *LuaDef.State, data: pointer, size: usize): cstring
+local LuaDef.Reg = @record{
+	name: cstring,
+	func: LuaDef.CFunction,
+}
+
+local LuaDef.Writer <cimport 'lua_Writer'> = @type
+
+return LuaDef

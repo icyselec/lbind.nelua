@@ -1,0 +1,151 @@
+--[[
+Copyright (c) 2024 icyselec
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+]]
+
+## LBIND_LUA_VERSION_DEFAULT = LBIND_LUA_VERSION_DEFAULT or {5, 4, 7}
+## LBIND_LUA_VERSION_X = LBIND_LUA_VERSION_X or LBIND_LUA_VERSION_DEFAULT[1]
+## LBIND_LUA_VERSION_Y = LBIND_LUA_VERSION_Y or LBIND_LUA_VERSION_DEFAULT[2]
+## LBIND_LUA_VERSION_Z = LBIND_LUA_VERSION_Z or LBIND_LUA_VERSION_DEFAULT[3]
+
+require 'traits'
+
+## cinclude (LBIND_HEADER_PATH .. "lua.h")
+## cinclude (LBIND_HEADER_PATH .. "lualib.h")
+
+local LuaDef = require 'LuaDef'
+
+local State: type = @LuaDef.State
+local CFunction: type = @LuaDef.CFunction
+local Alloc: type = @LuaDef.Alloc
+local Buffer: type = @LuaDef.Buffer
+local Debug: type = @LuaDef.Debug
+local Reader: type = @LuaDef.Reader
+local Reg: type = @LuaDef.Reg
+local Writer: type = @LuaDef.Writer
+local Integer: type = @LuaDef.Integer
+local Number: type = @LuaDef.Number
+local Hook: type = @LuaDef.Hook
+
+local Lua = @record{}
+
+function Lua.atpanic(L: *State, panicf: CFunction): CFunction <cimport 'lua_atpanic', nodecl> end
+function Lua.call(L: *State, nargs: cint, nresults: cint): void <cimport 'lua_call', nodecl> end
+
+function Lua.checkStack(L: *State, extra: cint): cint <cimport 'lua_checkstack', nodecl> end
+function Lua.close(L: *State): void <cimport 'lua_close', nodecl> end
+function Lua.concat(L: *State, n: cint): void <cimport 'lua_concat', nodecl> end
+function Lua.cpcall(L: *State, func: CFunction, ud: *void): cint <cimport 'lua_cpcall', nodecl> end
+
+function Lua.createtable(L: *State, narr: cint, nrec: cint): void <cimport 'lua_createtable', nodecl> end
+function Lua.dump(L: *State, writer: Writer, data: *void): cint <cimport 'lua_dump', nodecl> end
+function Lua.equal(L: *State, i: cint, j: cint): cint <cimport 'lua_equal', nodecl> end
+function Lua.error(L: *State): cint <cimport 'lua_error', nodecl> end
+function Lua.gc(L: *State, what: cint, data: cint): cint <cimport 'lua_gc', nodecl> end
+
+function Lua.getallocf(L: *State, ud: **void): Alloc <cimport 'lua_getallocf', nodecl> end
+
+-- deprecated in Lua 5.2
+function Lua.getfenv(L: *State, i: cint): void <cimport 'lua_getfenv', nodecl> end
+function Lua.getfield(L: *State, i: cint, k: cstring <const>): void <cimport 'lua_getfield', nodecl> end
+function Lua.getglobal(L: *State, name: cstring <const>): void <cimport 'lua_getglobal', nodecl> end
+function Lua.getmetatable(L: *State, i: cint): cint <cimport 'lua_getmetatable', nodecl> end
+function Lua.gettable(L: *State, i: cint): cint <cimport 'lua_gettable', nodecl> end
+function Lua.gettop(L: *State): cint <cimport 'lua_gettop', nodecl> end
+
+function Lua.insert(L: *State, i: cint): void <cimport 'lua_insert', nodecl> end
+
+function Lua.isboolean(L: *State, i: cint): cint <cimport 'lua_isboolean', nodecl> end
+function Lua.iscfunction(L: *State, i: cint): cint <cimport 'lua_iscfunction', nodecl> end
+function Lua.isfunction(L: *State, i: cint): cint <cimport 'lua_isfunction', nodecl> end
+function Lua.islightuserdata(L: *State, i: cint): cint <cimport 'lua_islightuserdata', nodecl> end
+function Lua.isnil(L: *State, i: cint): cint <cimport 'lua_isnil', nodecl> end
+function Lua.isnone(L: *State, i: cint): cint <cimport 'lua_isnone', nodecl> end
+function Lua.isnoneornil(L: *State, i: cint): cint <cimport 'lua_isnoneornil', nodecl> end
+function Lua.isnumber(L: *State, i: cint): cint <cimport 'lua_isnumber', nodecl> end
+function Lua.isstring(L: *State, i: cint): cint <cimport 'lua_isstring', nodecl> end
+function Lua.istable(L: *State, i: cint): cint <cimport 'lua_istable', nodecl> end
+function Lua.isthread(L: *State, i: cint): cint <cimport 'lua_isthread', nodecl> end
+function Lua.isuserdata(L: *State, i: cint): cint <cimport 'lua_isuserdata', nodecl> end
+
+function Lua.lessthan(L: *State, i: cint, j: cint): cint <cimport 'lua_lessthat', nodecl> end
+function Lua.load(L: *State, reader: Reader, data: pointer, chunkname: cstring <const>): cint <cimport 'lua_load', nodecl> end
+function Lua.newstate(L: *State, f: Alloc, ud: pointer): *State <cimport 'lua_newstate', nodecl> end
+function Lua.newtable(L: *State): void <cimport 'lua_newtable', nodecl> end
+function Lua.newthread(L: *State): *State <cimport 'lua_newthread', nodecl> end
+function Lua.newuserdata(L: *State, size: usize): pointer <cimport 'lua_newuserdata', nodecl> end
+function Lua.next(L: *State, i: cint): cint <cimport 'lua_next', nodecl> end
+function Lua.objlen(L: *State, i: cint): usize <cimport 'lua_objlen', nodecl> end
+
+function Lua.pcall(L: *State, nargs: cint, nresults: cint, errfunc: cint): cint <cimport 'lua_pcall', nodecl> end
+
+function Lua.pop(L: *State, n: cint): void <cimport 'lua_pop', nodecl> end
+
+function Lua.pushboolean(L: *State, b: cint): void <cimport 'lua_pushboolean', nodecl> end
+function Lua.pushclosure(L: *State, fn: CFunction, n: cint): void <cimport 'lua_pushclosure', nodecl> end
+function Lua.pushcfunction(L: *State, f: CFunction): void <cimport 'lua_pushcfunction', nodecl> end
+function Lua.pushfstring(L: *State, fmt: cstring <const>, ...): cstring <cimport 'lua_pushfstring', nodecl> end
+function Lua.pushinteger(L: *State, n: Integer): void <cimport 'lua_pushinteger', nodecl> end
+function Lua.pushlightuserdata(L: *State, p: pointer): void <cimport 'lua_pushlightuserdata', nodecl> end
+function Lua.pushliteral(L: *State, s: cstring <const>): void <cimport 'lua_pushliteral', nodecl> end
+function Lua.pushlstring(L: *State, s: cstring <const>, len: usize): void <cimport 'lua_pushlstring', nodecl> end
+function Lua.pushnil(L: *State): void <cimport 'lua_pushnil', nodecl> end
+function Lua.pushnumber(L: *State, n: Number): void <cimport 'lua_pushnumber', nodecl> end
+function Lua.pushstring(L: *State, s: cstring <const>): void <cimport 'lua_pushstring', nodecl> end
+function Lua.pushthread(L: *State): cint <cimport 'lua_pushthread', nodecl> end
+function Lua.pushvalue(L: *State, i: cint): void <cimport 'lua_pushvalue', nodecl> end
+function Lua.pushvfstring(L: *State, fmt: cstring <const>, argp: auto): cstring <cimport 'lua_pushvfstring', nodecl> end
+
+function Lua.rawequal(L: *State, i: cint, j: cint): cint <cimport 'lua_rawequal', nodecl> end
+function Lua.rawget(L: *State, i: cint): cint <cimport 'lua_rawget', nodecl> end
+function Lua.rawgeti(L: *State, i: cint, n: cint): cint <cimport 'lua_rawgeti', nodecl> end
+function Lua.rawset(L: *State, i: cint): cint <cimport 'lua_rawset', nodecl> end
+function Lua.rawseti(L: *State, i: cint, n: cint): cint <cimport 'lua_rawseti', nodecl> end
+function Lua.register(L: *State, name: cstring <const>, f: CFunction): void <cimport 'lua_register', nodecl> end
+function Lua.remove(L: *State, i: cint): void <cimport 'lua_remove', nodecl> end
+function Lua.replace(L: *State, i: cint): void <cimport 'lua_replace', nodecl> end
+function Lua.resume(L: *State, narg: cint): cint <cimport 'lua_resume', nodecl> end
+function Lua.setallocf(L: *State, f: Alloc, ud: pointer): void <cimport 'lua_setallocf', nodecl> end
+
+-- deprecated in Lua 5.2
+function Lua.setfenv(L: *State, i: cint): cint <cimport 'lua_setfenv', nodecl> end
+function Lua.setfield(L: *State, i: cint, k: cstring <const>): void <cimport 'lua_setfield', nodecl> end
+function Lua.setglobal(L: *State, name: cstring <const>): void <cimport 'lua_setglobal', nodecl> end
+function Lua.setmetatable(L: *State, i: cint): cint <cimport 'lua_setmetatable', nodecl> end
+function Lua.settable(L: *State, i: cint): void <cimport 'lua_settable', nodecl> end
+function Lua.settop(L: *State, i: cint): void <cimport 'lua_settop', nodecl> end
+function Lua.status(L: *State): cint <cimport 'lua_status', nodecl> end
+
+function Lua.toboolean(L: *State, i: cint): cint <cimport 'lua_toboolean', nodecl> end
+function Lua.tocfunction(L: *State, i: cint): cint <cimport 'lua_tocfunction', nodecl> end
+function Lua.tointeger(L: *State, i: cint): Integer <cimport 'lua_tointeger', nodecl> end
+function Lua.tolstring(L: *State, i: cint, len: *csize): cstring <cimport 'lua_tolstring', nodecl> end
+function Lua.tonumber(L: *State, i: cint): Number <cimport 'lua_tonumber', nodecl> end
+function Lua.topointer(L: *State, i: cint): pointer <cimport 'lua_topointer', nodecl> end
+function Lua.tostring(L: *State, i: cint): cstring <cimport 'lua_tostring', nodecl> end
+function Lua.tothread(L: *State, i: cint): *State <cimport 'lua_tothread', nodecl> end
+function Lua.touserdata(L: *State, i: cint): pointer <cimport 'lua_touserdata', nodecl> end
+
+function Lua.type(L: *State, i: cint): cint <cimport 'lua_type', nodecl> end
+function Lua.typename(L: *State, tp: cint): cstring <cimport 'lua_typename', nodecl> end
+function Lua.xmove(L: *State, to: *State, n: cint): void <cimport 'lua_xmove', nodecl> end
+function Lua.yield(L: *State, nresults: cint): cint <cimport 'lua_yield', nodecl> end
+
+-- Debug Library API
+function Lua.gethook(L: *State): Hook <cimport 'lua_gethook', nodecl> end
+function Lua.gethookcount(L: *State): cint <cimport 'lua_gethookcount', nodecl> end
+function Lua.gethookmask(L: *State): cint <cimport 'lua_gethookmask', nodecl> end
+function Lua.getinfo(L: *State, what: cstring <const>, ar: *Debug): cint <cimport 'lua_getinfo', nodecl> end
+function Lua.getlocal(L: *State, ar: Debug, n: cint): cstring <cimport 'lua_getlocal', nodecl> end
+function Lua.getstack(L: *State, level: cint, ar: *Debug): cint <cimport 'lua_getstack', nodecl> end
+function Lua.getupvalue(L: *State, funcindex: cint, n: cint): cstring <cimport 'lua_getupvalue', nodecl> end
+function Lua.sethook(L: *State, f: Hook, mask: cint, count: cint): cint <cimport 'lua_sethook', nodecl> end
+function Lua.setlocal(L: *State, ar: *Debug, n: cint): cstring <cimport 'lua_setlocal', nodecl> end
+function Lua.setupvalue(L: *State, funcindex: cint, n: cint): cstring <cimport 'lua_setupvalue', nodecl> end
+
+return Lua
